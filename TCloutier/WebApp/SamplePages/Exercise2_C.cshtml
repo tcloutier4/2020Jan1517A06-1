@@ -1,0 +1,85 @@
+﻿@{
+    Layout = "~/_Layout.cshtml";
+    Page.Title = "CheckBoxes";
+    var choices = "";
+    var customername = Request.Form["CustomerName"];
+}
+
+@section banner{
+    <h1>Exercise01: Basic form Processing</h1>
+}
+
+@if (IsPost)
+{
+    choices = Request.Form["CheckBoxGroup"];
+    if (customername.IsEmpty())
+    {
+        <p class="offset-1"><span style="color:firebrick">Sorry, we cannot serve he who shall not be named</span></p>
+    }
+    else if (choices.IsEmpty())
+    {
+        <p class="offset-1"><span style="color:firebrick">So you are not hungry?</span></p>
+    }
+    else
+    {
+        //choices will be a string of values separated by a comma
+        //I will need to split this string up at the commas
+        //to do so, we will use the single method .Split(delimiter)
+        //the delimiter is the character that separates your values
+        <p class="offset-1">
+            Order ready for @customername:
+            <ul>
+                @foreach (var item in choices.Split(','))
+                {
+                    <li class="offset-1">@item</li>
+                }
+            </ul>
+        </p>
+    }
+}
+else
+{
+    customername = "";
+    choices = "";    
+}
+<form id="EX01" method="post">
+    <div class="row offset-1">
+        <div class="col-md-3">
+            <div class="row">
+                <label for="CustomerName">Customer Name:</label>
+            </div>
+            <div class="row">
+                <input type="text" id="customername" name="customername" />
+            </div>
+        </div>
+
+
+        <div class="row col-md-9">
+            <div class="col-md-9">
+                <label for="CheckBoxGroup"><span style="font-style:oblique">Choose your meal items:</span></label><br />
+                <input type="checkbox" name="CheckBoxGroup" id="CheckBoxGroup"
+                       value="Steak"
+                       @(Array.IndexOf(choices.Split(','), "Steak") >= 0 ? "checked" : "") />Steak<br />
+                <input type="checkbox" name="CheckBoxGroup" id="CheckBoxGroup"
+                       value="Seafood"
+                       @(Array.IndexOf(choices.Split(','), "Seafood") >= 0 ? "checked" : "") />Seafood<br />
+                <input type="checkbox" name="CheckBoxGroup" id="CheckBoxGroup"
+                       value="Vegetables"
+                       @(Array.IndexOf(choices.Split(','), "Vegetables") >= 0 ? "checked" : "") />Vegetables<br />'
+            </div>
+        </div>
+        <div class="row">
+            <button type="submit" name="theButton" id="theButton" value="submit"
+                    class="btn btn-primary">
+                Submit
+            </button>
+            &nbsp;&nbsp; &nbsp;&nbsp;
+            <button type="submit" name="theButton" id="theButton" value="reset"
+                    class="btn btn-dark">
+                Reset
+            </button>
+        </div>
+    </div>
+</form>
+
+
