@@ -1,85 +1,60 @@
 ﻿@{
     Layout = "~/_Layout.cshtml";
-    Page.Title = "CheckBoxes";
-    var choices = "";
-    var customername = Request.Form["CustomerName"];
+    Page.Title = "WebGrid Demo";
+
+    //to receive incoming data passed as a parameter on the URL address
+    //  you will use Request.QueryString["xxxx"] where xxxx is the parameter label
+    //just like a control, if the parameter label does NOT exist, QueryString will
+    //    return a null
+    var incomingParameter = Request.QueryString["partialstring"];
+
+    //test: did a parameter actually exists
+    if (string.IsNullOrEmpty(incomingParameter))
+    {
+        Response.Redirect("Exercise2_A.cshtml");
+    }
+
+
+    var db = Database.Open("Chinook");
+    var queryCommand = @"SELECT ArtistId, Name
+                            FROM Artists
+                            WHERE Name like @0
+                            ORDER BY Name";
+    var results = db.Query(queryCommand, incomingParameter);
+
+    
+    var gridinstance = new WebGrid(results, rowsPerPage: 3);
 }
 
 @section banner{
-    <h1>Exercise01: Basic form Processing</h1>
+    <h1>Display a Collection of Records using WebGrid</h1>
 }
 
-@if (IsPost)
-{
-    choices = Request.Form["CheckBoxGroup"];
-    if (customername.IsEmpty())
-    {
-        <p class="offset-1"><span style="color:firebrick">Sorry, we cannot serve he who shall not be named</span></p>
-    }
-    else if (choices.IsEmpty())
-    {
-        <p class="offset-1"><span style="color:firebrick">So you are not hungry?</span></p>
-    }
-    else
-    {
-        //choices will be a string of values separated by a comma
-        //I will need to split this string up at the commas
-        //to do so, we will use the single method .Split(delimiter)
-        //the delimiter is the character that separates your values
-        <p class="offset-1">
-            Order ready for @customername:
-            <ul>
-                @foreach (var item in choices.Split(','))
-                {
-                    <li class="offset-1">@item</li>
-                }
-            </ul>
-        </p>
-    }
-}
-else
-{
-    customername = "";
-    choices = "";    
-}
-<form id="EX01" method="post">
-    <div class="row offset-1">
-        <div class="col-md-3">
-            <div class="row">
-                <label for="CustomerName">Customer Name:</label>
-            </div>
-            <div class="row">
-                <input type="text" id="customername" name="customername" />
-            </div>
-        </div>
+<form id="theForm" method="post">
+    <div class="offset-1">
+        <label for="Artists">Select the artist</label><br />
+        @* a single select is created using the option tag
+            the tag has a parameter call value
+            the display text is coded between the opening and closing tag*@
+    <select id="Artists" name="Artists">
+        <option value="">select ...</option>
+        @foreach (var item in results)
+        {
+            if (item.CategoryID.ToString() == incomingParameter)
+            {
+                <option value="@item.Name" selected>@item[1]</option>
+            }
+            else
+            {
+                <option value="@item.Name">@item[1]</option>
+            }
 
+        }
 
-        <div class="row col-md-9">
-            <div class="col-md-9">
-                <label for="CheckBoxGroup"><span style="font-style:oblique">Choose your meal items:</span></label><br />
-                <input type="checkbox" name="CheckBoxGroup" id="CheckBoxGroup"
-                       value="Steak"
-                       @(Array.IndexOf(choices.Split(','), "Steak") >= 0 ? "checked" : "") />Steak<br />
-                <input type="checkbox" name="CheckBoxGroup" id="CheckBoxGroup"
-                       value="Seafood"
-                       @(Array.IndexOf(choices.Split(','), "Seafood") >= 0 ? "checked" : "") />Seafood<br />
-                <input type="checkbox" name="CheckBoxGroup" id="CheckBoxGroup"
-                       value="Vegetables"
-                       @(Array.IndexOf(choices.Split(','), "Vegetables") >= 0 ? "checked" : "") />Vegetables<br />'
-            </div>
-        </div>
-        <div class="row">
-            <button type="submit" name="theButton" id="theButton" value="submit"
-                    class="btn btn-primary">
-                Submit
-            </button>
-            &nbsp;&nbsp; &nbsp;&nbsp;
-            <button type="submit" name="theButton" id="theButton" value="reset"
-                    class="btn btn-dark">
-                Reset
-            </button>
-        </div>
+    </select><br /><br />
+        <button type="submit" name="theButton" id="theButton" value="submit"
+                class="btn btn-primary">
+            Submit
+        </button>
     </div>
 </form>
-
-

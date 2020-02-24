@@ -1,85 +1,74 @@
 ﻿@{
+    Page.Title = "Product Search";
     Layout = "~/_Layout.cshtml";
-    Page.Title = "CheckBoxes";
-    var choices = "";
-    var customername = Request.Form["CustomerName"];
-}
+    var productsearch = Request.Form["ProductSearch"];
 
+    var db = Database.Open("Chinook");
+    var partialsearchstring = "%" + productsearch + "%";
+
+    var queryStatement = @"SELECT ArtistId
+                    FROM Artists
+                    WHERE Name like @0";
+
+}
 @section banner{
-    <h1>Exercise01: Basic form Processing</h1>
+    <h1>Product Search</h1>
 }
+<div class="form-group">
 
-@if (IsPost)
-{
-    choices = Request.Form["CheckBoxGroup"];
-    if (customername.IsEmpty())
-    {
-        <p class="offset-1"><span style="color:firebrick">Sorry, we cannot serve he who shall not be named</span></p>
-    }
-    else if (choices.IsEmpty())
-    {
-        <p class="offset-1"><span style="color:firebrick">So you are not hungry?</span></p>
-    }
-    else
-    {
-        //choices will be a string of values separated by a comma
-        //I will need to split this string up at the commas
-        //to do so, we will use the single method .Split(delimiter)
-        //the delimiter is the character that separates your values
-        <p class="offset-1">
-            Order ready for @customername:
-            <ul>
-                @foreach (var item in choices.Split(','))
-                {
-                    <li class="offset-1">@item</li>
-                }
-            </ul>
-        </p>
-    }
-}
-else
-{
-    customername = "";
-    choices = "";    
-}
-<form id="EX01" method="post">
-    <div class="row offset-1">
-        <div class="col-md-3">
-            <div class="row">
-                <label for="CustomerName">Customer Name:</label>
-            </div>
-            <div class="row">
-                <input type="text" id="customername" name="customername" />
-            </div>
-        </div>
-
-
-        <div class="row col-md-9">
-            <div class="col-md-9">
-                <label for="CheckBoxGroup"><span style="font-style:oblique">Choose your meal items:</span></label><br />
-                <input type="checkbox" name="CheckBoxGroup" id="CheckBoxGroup"
-                       value="Steak"
-                       @(Array.IndexOf(choices.Split(','), "Steak") >= 0 ? "checked" : "") />Steak<br />
-                <input type="checkbox" name="CheckBoxGroup" id="CheckBoxGroup"
-                       value="Seafood"
-                       @(Array.IndexOf(choices.Split(','), "Seafood") >= 0 ? "checked" : "") />Seafood<br />
-                <input type="checkbox" name="CheckBoxGroup" id="CheckBoxGroup"
-                       value="Vegetables"
-                       @(Array.IndexOf(choices.Split(','), "Vegetables") >= 0 ? "checked" : "") />Vegetables<br />'
-            </div>
-        </div>
+    <form id="theForm" action="" method="post">
         <div class="row">
-            <button type="submit" name="theButton" id="theButton" value="submit"
-                    class="btn btn-primary">
-                Submit
-            </button>
-            &nbsp;&nbsp; &nbsp;&nbsp;
-            <button type="submit" name="theButton" id="theButton" value="reset"
-                    class="btn btn-dark">
-                Reset
-            </button>
+            <div class="col-sm-3">
+                <label for="ProductSearch">Product Name</label><br />
+                <input type="text" name="ProductSearch" value=" @productsearch"><br /><br />
+                <button type="submit" class="btn btn-primary" name="Search" id="theSearch">Search</button>
+
+            </div>
+            <div class="col-sm-8">
+                @if (IsPost)
+                {
+                    if (productsearch.IsEmpty())
+                    {
+                        <p><strong><span style="color:firebrick">Enter a product name (or partial name).</span></strong></p>
+                    }
+                    else
+                    {
+                        var queryProducts = db.Query(queryStatement, partialsearchstring);
+                        if (queryProducts.Count() == 0)
+                        {
+                            <p><strong><span style="color:firebrick">Nothing found for search argument.</span></strong></p>
+                        }
+                        else
+                        {
+                            var grid = new WebGrid(queryProducts);
+                            @grid.GetHtml("table table-bordered table-striped table-hover",
+                            mode: WebGridPagerModes.All,
+                            lastText: "Last",
+                            firstText: "First",
+                            columns: grid.Columns(
+                            grid.Column(columnName: "ArtistID", header: "ID"),
+                            grid.Column(columnName: "Title"),
+                            grid.Column(columnName: "ReleaseYear", header: "Released"),
+                            grid.Column(columnName: "ReleaseLabel", header: "Label"),
+                            grid.Column(header: "", format: @<text><a href="~/SamplePages/ProductEdit.cshtml?pid=@item.ProductID">Edit</a></text>)
+));
+                        }
+                    }
+                }
+            </div>
         </div>
-    </div>
-</form>
-
-
+        @* Since the webgrid is in the form which use a method:post, the webgrid
+             paging is not working. WHY? The webgrid uses a method:get. Thus the
+             conflict on inproper paging.
+            To solve this problem, we add the following script to cause a post to
+              happen on the webgrid's paging event.*@
+        <script type="text/javascript">
+            var links = $('a[href*=page], a[href*=sort]'), form = $('form');
+            links.click(function () {
+                form.attr("action", this.href);
+                $(this).attr("href", "javascript:");
+                form.submit();
+            });
+        </script>
+    </form>
+</div> 
