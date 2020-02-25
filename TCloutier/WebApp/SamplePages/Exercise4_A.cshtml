@@ -1,35 +1,35 @@
 ﻿@{
     Page.Title = "Product Search";
     Layout = "~/_Layout.cshtml";
-    var artistsearch = Request.Form["ArtistSearch"];
+    var albumsearch = Request.Form["AlbumSearch"];
 
     var db = Database.Open("Chinook");
-    var partialsearchstring = "%" + artistsearch + "%";
+    var partialsearchstring = "%" + albumsearch + "%";
 
-    var queryStatement = @"SELECT ArtistId
-                            FROM Artists
-                            WHERE Name like @0";
-   
+    var queryStatement = @"SELECT AlbumID
+                    FROM Albums
+                    WHERE Title like @0";
+
 }
 @section banner{
-    <h1>Artist search</h1>
+    <h1>Album search</h1>
 }
 <div class="form-group">
-  
+
     <form id="theForm" action="" method="post">
         <div class="row">
             <div class="col-sm-3">
-                <label for="ArtistSearch">Artist Search</label><br />
-                <input type="text" name="ArtistSearch" value=" @artistsearch"><br /><br />
+                <label for="AlbumSearch">Album Search</label><br />
+                <input type="text" name="AlbumSearch" value=" @albumsearch"><br /><br />
                 <button type="submit" class="btn btn-primary" name="Search" id="theSearch">Search</button>
 
             </div>
             <div class="col-sm-8">
                 @if (IsPost)
                 {
-                    if (artistsearch.IsEmpty())
+                    if (albumsearch.IsEmpty())
                     {
-                        <p><strong><span style="color:firebrick">Enter an artist name (or partial name).</span></strong></p>
+                        <p><strong><span style="color:firebrick">Enter an album name (or partial name).</span></strong></p>
                     }
                     else
                     {
@@ -40,17 +40,17 @@
                         }
                         else
                         {
-                            Response.Redirect("Exercise2_B.cshtml?partialstring=" + partialsearchstring);
+                            Response.Redirect("Exercise4_B.cshtml?partialstring=" + partialsearchstring);
                         }
                     }
                 }
             </div>
         </div>
         @* Since the webgrid is in the form which use a method:post, the webgrid
-            paging is not working. WHY? The webgrid uses a method:get. Thus the
-            conflict on inproper paging.
-           To solve this problem, we add the following script to cause a post to
-             happen on the webgrid's paging event.*@
+             paging is not working. WHY? The webgrid uses a method:get. Thus the
+             conflict on inproper paging.
+            To solve this problem, we add the following script to cause a post to
+              happen on the webgrid's paging event.*@
         <script type="text/javascript">
             var links = $('a[href*=page], a[href*=sort]'), form = $('form');
             links.click(function () {

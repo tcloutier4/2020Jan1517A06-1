@@ -1,74 +1,60 @@
 ﻿@{
-    Page.Title = "Product Search";
+    Page.Title = "Exercise";
     Layout = "~/_Layout.cshtml";
     var productsearch = Request.Form["ProductSearch"];
 
     var db = Database.Open("Chinook");
-    var partialsearchstring = "%" + productsearch + "%";
+    var artistID = Request.QueryString["ArtistID"];
 
-    var queryStatement = @"SELECT ArtistId
-                    FROM Artists
-                    WHERE Name like @0";
+    if (string.IsNullOrEmpty(artistID))
+    {
+        Response.Redirect("Exercise2_A.cshtml");
+    }
+    var artistQuery = @"Select Name
+                        From Artists
+                        Where ArtistId = @0";
+    var artistName = db.Query(artistQuery, artistID);
 
-}
-@section banner{
-    <h1>Product Search</h1>
-}
-<div class="form-group">
+    var queryAlbum = @"SELECT AlbumId, Title, ReleaseYear, ReleaseLabel 
+                        FROM Albums
+                        WHERE ArtistId = @0   
+                        ORDER BY Title";
 
-    <form id="theForm" action="" method="post">
+    var albumList = db.Query(queryAlbum, artistID);
+
+    if (albumList.Count() == 0)
+    {
+        <p><span style="color:firebrick">There are no albums for that band.</span></p>
+    }
+    else
+    {
+        var results = db.Query(queryAlbum, artistID);
+        var gridinstance = new WebGrid(results, rowsPerPage: 10);
+
         <div class="row">
-            <div class="col-sm-3">
-                <label for="ProductSearch">Product Name</label><br />
-                <input type="text" name="ProductSearch" value=" @productsearch"><br /><br />
-                <button type="submit" class="btn btn-primary" name="Search" id="theSearch">Search</button>
-
-            </div>
-            <div class="col-sm-8">
-                @if (IsPost)
-                {
-                    if (productsearch.IsEmpty())
-                    {
-                        <p><strong><span style="color:firebrick">Enter a product name (or partial name).</span></strong></p>
-                    }
-                    else
-                    {
-                        var queryProducts = db.Query(queryStatement, partialsearchstring);
-                        if (queryProducts.Count() == 0)
-                        {
-                            <p><strong><span style="color:firebrick">Nothing found for search argument.</span></strong></p>
-                        }
-                        else
-                        {
-                            var grid = new WebGrid(queryProducts);
-                            @grid.GetHtml("table table-bordered table-striped table-hover",
-                            mode: WebGridPagerModes.All,
-                            lastText: "Last",
-                            firstText: "First",
-                            columns: grid.Columns(
-                            grid.Column(columnName: "ArtistID", header: "ID"),
-                            grid.Column(columnName: "Title"),
-                            grid.Column(columnName: "ReleaseYear", header: "Released"),
-                            grid.Column(columnName: "ReleaseLabel", header: "Label"),
-                            grid.Column(header: "", format: @<text><a href="~/SamplePages/ProductEdit.cshtml?pid=@item.ProductID">Edit</a></text>)
-));
-                        }
-                    }
-                }
-            </div>
+        <div class="offset-3 col-md-6">
+            <span style="font-size:x-large"><strong>Albums by @artistName</strong></span>
+            @gridinstance.GetHtml(
+                  tableStyle: "table table-striped table-bordered table-hover",
+                  mode: WebGridPagerModes.All,
+                  firstText: "Start",
+                  lastText: "End",
+                 columns: gridinstance.Columns(
+                     gridinstance.Column(columnName: "AlbumID", header: "ID"),
+                     gridinstance.Column(columnName: "Title", header: "Title"),
+                     gridinstance.Column(columnName: "ReleaseYear", header: "Released"),
+                     gridinstance.Column(columnName: "ReleaseLabel", header: "Label")
+ ))
         </div>
-        @* Since the webgrid is in the form which use a method:post, the webgrid
-             paging is not working. WHY? The webgrid uses a method:get. Thus the
-             conflict on inproper paging.
-            To solve this problem, we add the following script to cause a post to
-              happen on the webgrid's paging event.*@
-        <script type="text/javascript">
-            var links = $('a[href*=page], a[href*=sort]'), form = $('form');
-            links.click(function () {
-                form.attr("action", this.href);
-                $(this).attr("href", "javascript:");
-                form.submit();
-            });
-        </script>
-    </form>
-</div> 
+    </div>
+    }
+}
+
+    @section banner
+        {
+        <h1>@artistName</h1>
+    }
+
+
+
+

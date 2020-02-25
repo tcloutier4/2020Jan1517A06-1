@@ -145,6 +145,11 @@
     <Content Include="SamplePages\Exercise1.cshtml" />
     <Content Include="SamplePages\Exercise2_B.cshtml" />
     <Content Include="SamplePages\Exercise2_A.cshtml" />
+    <Content Include="SamplePages\Exercise3.cshtml" />
+    <Content Include="SamplePages\Exercise4_B.cshtml" />
+    <Content Include="SamplePages\Exercise4_A.cshtml" />
+    <Content Include="SamplePages\Exercise4_C.cshtml" />
+    <Content Include="SamplePages\Exercise4_C2.cshtml" />
     <None Include="Scripts\jquery-3.4.1.intellisense.js" />
     <Content Include="Scripts\jquery-3.4.1.js" />
     <Content Include="Scripts\jquery-3.4.1.min.js" />
