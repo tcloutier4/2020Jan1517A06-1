@@ -127,5 +127,10 @@ namespace WebApp.SamplePages
 
             }
         }
+
+        protected void LinkButtonCollection_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
