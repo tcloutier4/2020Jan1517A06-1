@@ -1,0 +1,60 @@
+﻿@{
+    Page.Title = "Exercise";
+    Layout = "~/_Layout.cshtml";
+    var productsearch = Request.Form["ProductSearch"];
+
+    var db = Database.Open("Chinook");
+    var artistID = Request.QueryString["ArtistID"];
+
+    if (string.IsNullOrEmpty(artistID))
+    {
+        Response.Redirect("Exercise2_A.cshtml");
+    }
+    var artistQuery = @"Select Name
+                        From Artists
+                        Where ArtistId = @0";
+    var artistName = db.Query(artistQuery, artistID);
+
+    var queryAlbum = @"SELECT AlbumId, Title, ReleaseYear, ReleaseLabel 
+                        FROM Albums
+                        WHERE ArtistId = @0   
+                        ORDER BY Title";
+
+    var albumList = db.Query(queryAlbum, artistID);
+
+    if (albumList.Count() == 0)
+    {
+        <p><span style="color:firebrick">There are no albums for that band.</span></p>
+    }
+    else
+    {
+        var results = db.Query(queryAlbum, artistID);
+        var gridinstance = new WebGrid(results, rowsPerPage: 10);
+
+        <div class="row">
+        <div class="offset-3 col-md-6">
+            <span style="font-size:x-large"><strong>Albums by @artistName</strong></span>
+            @gridinstance.GetHtml(
+                  tableStyle: "table table-striped table-bordered table-hover",
+                  mode: WebGridPagerModes.All,
+                  firstText: "Start",
+                  lastText: "End",
+                 columns: gridinstance.Columns(
+                     gridinstance.Column(columnName: "AlbumID", header: "ID"),
+                     gridinstance.Column(columnName: "Title", header: "Title"),
+                     gridinstance.Column(columnName: "ReleaseYear", header: "Released"),
+                     gridinstance.Column(columnName: "ReleaseLabel", header: "Label")
+ ))
+        </div>
+    </div>
+    }
+}
+
+    @section banner
+        {
+        <h1>@artistName</h1>
+    }
+
+
+
+

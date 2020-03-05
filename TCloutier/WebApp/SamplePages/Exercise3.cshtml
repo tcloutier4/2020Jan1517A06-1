@@ -1,0 +1,169 @@
+﻿@{
+    Layout = "~/_Layout.cshtml";
+    Page.Title = "Exercise 3";
+
+    var thebutton = Request.Form["theButton"];
+    var title = "";
+    var artistName = "";
+    var artistID = "";
+    var releaseYear = "";
+    var releaseLabel = "";
+
+
+    //obtain the record collection (dataset) for the supplierid and categoryid
+    var db = Database.Open("Chinook");
+    var artistquery = @"SELECT ArtistID, Name
+                 FROM Artists
+                 Order by Name";
+
+    var artistidquery = @"Select ArtistID from artists where name = @0";
+
+    var artistlist = db.Query(artistquery);
+
+
+    Validation.Add("title",
+          Validator.Required("Title is a required field."),
+          Validator.StringLength(160, 1, "Title is limited to 160 characters"));
+
+    Validation.Add("artistID",
+          Validator.Required("artistID is requred"),
+          Validator.Integer("Artist ID must be an integer"));
+
+    Validation.Add("releaseYear",
+        Validator.Integer("Release year must be an integer"),
+        Validator.Range(1950, DateTime.Today.Year, "Date must be between today and 1950"));
+
+    Validation.Add("releaseLabel",
+        Validator.StringLength(50, 0, "Release label is limited to 50 characters"));
+
+}
+
+
+@section banner{
+    <h1>Exercise 3: Database Data Entry</h1>
+}
+
+
+@if (IsPost)
+            {
+                if (thebutton.Equals("clear"))
+                {
+                    title = "";
+                    artistID = "";
+                    artistName = "";
+                    releaseYear = "";
+                    releaseLabel = "";
+
+                }
+                else
+                {
+
+                    title = Request.Form["Title"];
+                    artistID = Request.Form["ArtistName"];
+                    releaseYear = Request.Form["ReleaseYear"];
+                    releaseLabel = Request.Form["ReleaseLabel"];
+
+
+                    
+
+                    //validation controls DO NOT execute unless you request their execution using IsValid
+                    if (Validation.IsValid())
+                    {
+
+                        try
+                        {
+                            // if you have validation that is NOT possible through HTML 5 validation OR
+                            //    using Validation controls you will need to write your own
+                            //    logic to handle the errors
+                            // example: Lets assume that the supplier id is a require field
+                            //          Lets assume that the validation was not preformed by HTML 5 or
+                            //               using Validation controls
+                            if (string.IsNullOrEmpty(artistID) || int.Parse(artistID) < 1)
+                            {
+                                throw new Exception("Invalid Artist ID. Please select from the supplied list.");
+                            }
+
+                            //connect to the database
+                            //var db = Database.Open("NWDB");
+
+                            //create the sql insert command
+                            var insertcommand = @"INSERT INTO Albums (Title, ArtistId, ReleaseYear, ReleaseLabel)
+                                                    VALUES(@0, @1, @2, @3)";
+
+                            //execute the insert command
+                            //to execute the insert, update or delete command use .Execute()
+                            db.Execute(insertcommand, title,
+                                        artistID.Equals("0") ? null : artistID,
+                                        string.IsNullOrEmpty(releaseYear) ? null : releaseYear,
+                                        string.IsNullOrEmpty(releaseLabel) ? null : releaseLabel);
+
+                            //get the identity value of the last inserted record.
+                            var x = db.GetLastInsertId();
+                //display a successmessage
+                <p class="col-md-12 text-center">
+                    <span style="color:green"><strong>New Product Added @x  </strong></span>
+                </p>
+            }
+            catch (Exception ex)
+            {
+                <p class="col-md-12 text-center">
+                    <span style="color:firebrick"><strong>Error: @ex.Message</strong></span>
+                </p>
+            }
+        }
+    }
+}
+else
+{
+
+}
+
+
+@Html.ValidationSummary()
+
+<form id="theForm" method="post">
+    <div class="row">
+        <div class="col-md-6 text-right">
+            <label for="Title">Title: </label><br />
+            <label for="ArtistName">Artist Name: </label><br />
+            <label for="ReleaseYear">Release Year: </label><br />
+            <label for="ReleaseLabel">Release Label: </label><br />
+        </div>
+        <div class="col-md-6">
+            <input type="text" id="Title" name="Title"
+                   placeholder="Enter Album Name" title="Title"
+                   value="@title" /><br />
+            <select id="ArtistName" name="ArtistName">
+                <option value="0">Select Artist...</option>
+                @foreach (var item in artistlist)
+                {
+
+                    if (artistID == item.artistID.ToString())
+                    {
+                        <option value="@item.artistID" selected>@item.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@item.artistID">@item.Name</option>
+                    }
+                }
+            </select><br />
+            <input type="number" id="ReleaseYear" name="ReleaseYear"
+                   value="@releaseYear" step="1" min="1950" max="@DateTime.Today.Year"/><br />
+            <input type="text" id="ReleaseLabel" name="ReleaseLabel"
+                   value="@releaseLabel" /><br />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <button type="submit" name="theButton" id="theButton" value="submit"
+                    class="btn btn-primary">
+                Submit
+            </button>&nbsp;&nbsp;
+            <button type="submit" name="theButton" id="theButton" value="clear"
+                    class="btn btn-light">
+                Clear
+            </button>
+        </div>
+    </div>
+</form>

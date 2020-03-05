@@ -1,0 +1,227 @@
+﻿@{
+    Page.Title = "Product Edit";
+    Layout = "~/_Layout.cshtml";
+
+
+    var AlbumID = Request.QueryString["AlbumID"];
+
+
+    //capture which button was pressed
+    var thebutton = Request.Form["theButton"];
+
+    var db = Database.Open("Chinook");
+    var albumquery = @"Select @0
+                        From Albums
+                        Where AlbumID = @1";
+
+    var albumName = db.Query(albumquery, "Title", AlbumID);
+    var title = Request.Form["Title"];
+    var artistID = Request.Form["ArtistName"];
+    var releaseYear = Request.Form["ReleaseYear"];
+    var releaseLabel = Request.Form["ReleaseLabel"];
+    var albumID = AlbumID;
+
+
+
+    Validation.Add("title",
+        Validator.Required("Title is a required field."),
+        Validator.StringLength(160, 1, "Title is limited to 160 characters"));
+
+    Validation.Add("artistID",
+        Validator.Required("artistID is requred"),
+        Validator.Integer("Artist ID must be an integer"));
+
+    Validation.Add("releaseYear",
+        Validator.Integer("Release year must be an integer"),
+        Validator.Range(1950, DateTime.Today.Year, "Date must be between today and 1950"));
+
+    Validation.Add("releaseLabel",
+        Validator.StringLength(50, 0, "Release label is limited to 50 characters"));
+}
+
+
+
+@section banner{
+    <h1>Product Edit - Update and Delete</h1>
+}
+@if (IsPost)
+{
+    if (thebutton.Equals("cancel"))
+    {
+        Response.Redirect("Exercise4_A.cshtml");
+    }
+    else if (thebutton.Equals("delete"))
+    {
+            try
+            {
+                //connect to database
+                //done above: no code necessary
+
+                //command for logical delete
+                var updatecommand = @"UPDATE Albums 
+                                        SET Title =@0, 
+                                        ArtistId = @1, 
+                                        ReleaseYear = @2,
+                                        ReleaseLabel = @3
+                                        WHERE AlbumId = @4";
+
+                //execution for logical delete
+                //the return result of the execution is the number of row affected
+                int rowsaffected = db.Execute(updatecommand, 1, albumID) ;
+
+                //command for physical delete
+                //var deletecommand = @"DELETE Products
+                //            WHERE ProductID = @0";
+
+                //execution for logical delete
+                //the return result of the execution is the number of row affected
+                //int rowsaffected = db.Execute(updatecommand, productid);
+
+
+                if (rowsaffected > 0)
+                {
+                    //row was found and changed
+                    <p><span style="color:green">Product removed.</span></p>
+                    albumID = "";
+                    //optionally clear the form
+                }
+                else
+                {
+                    //no row was found to change
+                    <p>
+                        <span style="color:blue">
+                            Update not done. No album called @albumName with
+                            a album ID of @albumID was found on file.
+                        </span>
+                        <a href="~/SamplePages/Exercise4_A.cshtml">Go to search ...</a>
+                    </p>
+                    albumID = "";
+                }
+
+            }
+            catch (Exception ex)
+            {
+                <p>
+                    <span style="color:firebrick">
+                        Remove failed: Error: @ex.Message
+                    </span>
+                </p>
+            }
+
+        }
+    }
+    else
+    {
+
+
+        if (string.IsNullOrEmpty(albumID))
+        {
+            <p>
+                <span style="color:blue">
+                    No product is selected. Return to search for another product
+                </span>
+                <a href="~/SamplePages/Exercise4_A.cshtml">go to search ...</a>
+            </p>
+        }
+        else
+        {
+            if (Validation.IsValid())
+            {
+                try
+                {
+                    //connect to database
+                    //done above: no code necessary
+
+                    //command
+                    var updatecommand = @"UPDATE Albums 
+                                            SET Title =@0, 
+                                            ArtistId = @1, 
+                                            ReleaseYear = @2,
+                                            ReleaseLabel = @3
+                                            WHERE AlbumId = @4";
+
+                    //execution
+                    //the return result of the execution is the number of row affected
+                    int rowsaffected = db.Execute(updatecommand, albumName,
+                            artistID.Equals("0") ? null : artistID,                                                       
+                            string.IsNullOrEmpty(releaseYear) ? null : releaseYear,
+                            string.IsNullOrEmpty(releaseLabel) ? null : releaseLabel);
+                    if (rowsaffected > 0)
+                    {
+                        //row was found and changed
+                        <p><span style="color:green">Product updated.</span></p>
+                    }
+                    else
+                    {
+                        //no row was found to change
+                        <p>
+                            <span style="color:blue">
+                                Updated not done. No product called @albumName with
+                                a product id of @albumID was found on file.
+                            </span>
+                            <a href="~/SamplePages/ProductSearch.cshtml">Go to search ...</a>
+                        </p>
+                        albumID = "";
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    <p>
+                        <span style="color:firebrick">
+                            Update failed: Error: @ex.Message
+                        </span>
+                    </p>
+                }
+            }
+        }
+
+    }
+}
+else 
+{
+
+}
+<div class="form-group">
+
+    <form id="theForm" action="" method="post">
+        <div class="row">
+            <div class="col-sm-6 text-right">
+                <label for="ArtistName">Artist Name: </label><br />
+                <label for="AlbumName">Album Name: </label><br />
+
+                <label for="ReleaseYear">Release Year: </label><br />
+                <label for="ReleaseLabel">Release Label: </label><br />
+            </div>
+            <div class="col-sm-6">
+                <input type="text" id="AlbumName" name="AlbumName"
+                       value="@albumName", required /> <br />
+                <input type="number" id="ReleaseYear" name="ReleaseYear"
+                       value="" step="1" min="1950" max="@DateTime.Today.Year" /><br />
+                <input type="text" id="ReleaseLabel" name="ReleaseLabel"
+                       value="@releaseLabel" /><br />
+            </div>
+
+        </div>
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <button type="submit" name="theButton" id="theUpdate" class="btn btn-primary" 
+                        value="update">Update</button>&nbsp;&nbsp;&nbsp;
+                <button type="submit" name="theButton" id="theDelete" class="btn btn-danger" 
+                        value="delete" formnovalidate>Delete</button>&nbsp;&nbsp;&nbsp;
+                <button type="submit" name="theButton" id="theCancel" class="btn btn-light" 
+                        value="cancel" formnovalidate>Cancel</button>
+            </div>
+        </div>
+        @* this javascript is used to ask for user confirmation on pressing a button; in this
+              case, it is the Delete button
+            Notice that the name attribute which is used by Request.Form is identical whereas
+               the id attribute is unique which is used by javascript*@
+        <script type="text/javascript">
+            document.getElementById("theDelete").onclick = ConfirmDelete;
+            function ConfirmDelete() {
+                return confirm("Are you sure you want to delete @albumName?")
+            }
+        </script>
+    </form>
+</div>

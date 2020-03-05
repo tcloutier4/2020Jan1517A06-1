@@ -1,0 +1,86 @@
+﻿@{
+    Layout = "~/_Layout.cshtml";
+    Page.Title = "WebGrid Demo";
+
+    //to receive incoming data passed as a parameter on the URL address
+    //  you will use Request.QueryString["xxxx"] where xxxx is the parameter label
+    //just like a control, if the parameter label does NOT exist, QueryString will
+    //    return a null
+    var incomingParameter = Request.QueryString["partialstring"];
+    var partialstring = "%" + incomingParameter + "%";
+    var artistchoice = Request.Form["Artists"];
+    if (artistchoice == null)
+    {
+        artistchoice = "0";
+    }
+
+    //test: did a parameter actually exists
+    if (string.IsNullOrEmpty(incomingParameter))
+    {
+        Response.Redirect("Exercise2_A.cshtml");
+    }
+
+
+    var db = Database.Open("Chinook");
+    var queryCommand = @"SELECT ArtistId, Name
+                            FROM Artists
+                            WHERE Name like @0
+                            ORDER BY Name";
+    var results = db.Query(queryCommand, partialstring);
+    var queryAlbum = @"Select AlbumId
+                        From Albums
+                        Where ArtistId like @0
+                        Order by ReleaseYear";
+}
+
+@if (IsPost)
+{
+    if (artistchoice == "")
+    {
+        <p><span style="color:firebrick">Please select a group from the dropdown menu</span></p>
+    }
+    else
+    {
+        var checkalbums = db.Query(queryAlbum, artistchoice);
+        if (checkalbums.Count() == 0)
+        {
+        <p><span style="color:firebrick">There are no albums for that group</span></p>
+        }
+        else
+        {
+            Response.Redirect("Exercise2_C.cshtml?ArtistID=" + artistchoice);
+        }
+    }
+}
+@section banner{
+    <h1>Select the artist you're looking for</h1>
+}
+
+<form id="theForm" method="post">
+    <div class="offset-1">
+        <label for="Artists">Select the artist</label><br />
+        @* a single select is created using the option tag
+            the tag has a parameter call value
+            the display text is coded between the opening and closing tag*@
+    <select id="Artists" name="Artists">
+        <option value="">select ...</option>
+        @foreach (var item in results)
+        {
+            if (item.Name.ToString() == partialstring)
+            {
+                <option value="@item.ArtistId" selected>@item.Name</option>
+            }
+            else
+            {
+                <option value="@item.ArtistId">@item.Name</option>
+            }
+        }
+
+
+    </select><br /><br />
+        <button type="submit" name="theButton" id="theButton" value="submit"
+                class="btn btn-primary">
+            Fetch Album
+        </button>
+    </div>
+</form>
